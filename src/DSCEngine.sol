@@ -84,6 +84,15 @@ contract DSCEngine is ReentrancyGuard {
         }
     }
 
+    function burnDsc(uint256 amount) public moreThanZero(amount) nonReentrant(){
+        s_DscMinted[msg.sender] -= amount ;
+        bool success = i_dsc.transferFrom(msg.sender , address (this) , amount);
+        if(!success){
+            revert dsc_transferfailed();
+        }
+        i_dsc.burn(amount);
+    }
+
     function healthFactor(address user) public view returns (uint256){
         uint256 totalDscMinted = s_DscMinted[user];
         uint256 totalCollateralValueInUsd = getCollateralValueInUsd(user);
