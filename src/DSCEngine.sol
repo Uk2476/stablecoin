@@ -61,7 +61,7 @@ contract DSCEngine is ReentrancyGuard {
 
     function mintDSc(uint256 amount) public moreThanZero(amount) nonReentrant {
         s_DscMinted[msg.sender] += amount ;
-        if (healthFactor(msg.sender) < 1){
+        if (healthFactor(msg.sender) < 1e18){
             revert dsc_healthfactorlessthanone();
         }
         i_dsc.mint(msg.sender , amount);
@@ -70,6 +70,18 @@ contract DSCEngine is ReentrancyGuard {
     function depositCollateralAndMintDsc (address collateralAddress , uint256 collateralAmount , uint256 dscAmount) external {
         depositCollateral(collateralAddress, collateralAmount);
         mintDSc(dscAmount);
+    }
+
+    function redeemCollateral( address collateralAddress  , uint256 amount) public moreThanZero(amount) validCollateral(collateralAddress) nonReentrant {
+        s_collateralDeposited[msg.sender][collateralAddress] -= amount ;
+        bool success = IERC20(collateralAddress).transfer(msg.sender , amount );
+        if(!success){
+            revert dsc_transferfailed();
+        }
+
+        if (healthFactor(msg.sender) < 1e18){
+            revert dsc_healthfactorlessthanone();
+        }
     }
 
     function healthFactor(address user) public view returns (uint256){
