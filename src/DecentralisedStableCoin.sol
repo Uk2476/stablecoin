@@ -20,6 +20,12 @@ contract DecentralisedStableCoin is ERC20Burnable, Ownable {
     }
 
     function burn(uint256 amount) public override onlyOwner {
+        if (amount <= 0) {
+            revert AmountMustBeGreaterThanZero();
+        }
+        if (balanceOf(msg.sender) < amount) {
+            revert InsufficientBalance();
+        }
         super.burn(amount);
     }
 
