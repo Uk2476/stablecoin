@@ -56,8 +56,20 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     function healthFactor(address user) public view returns (uint256){
-        
+        uint256 totalDscMinted = s_DscMinted[user];
+        uint256 totalCollateralValueInUsd = getCollateralValueInUsd(user);
     }
 
+    function getCollateralValueInUsd(address user) public view returns (uint256) {
+        uint256 totalValue = 0;
+        for(uint256 i=0 ; i < i_tokenaddresses.length ; i++){
+            totalValue += s_collateralDeposited[user][i_tokenaddresses[i]] * getPriceinUsd(i_tokenaddresses[i]);
+        }
 
+    }
+
+    function getPriceinUsd(address token) public view returns (uint256){
+        address priceFeedAddress = s_priceFeeds[token];
+        
+    }
 }
