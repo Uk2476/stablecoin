@@ -4,12 +4,19 @@ pragma solidity ^0.8.18;
 import {DecentralisedStableCoin} from "./DecentralisedStableCoin.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
-import {AggregatorV3Interface} from "chainlink-brownie-contracts/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {AggregatorV3Interface} from "chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 
 contract DSCEngine is ReentrancyGuard {
+
+    error dsc_amountmustbegreaterthanzero();
+    error dsc_notavalidcollateral();
+    error dsc_tokensandpricefeedslengthmismatcch(); 
+    error dsc_transferfailed();
+    error dsc_healthfactorlessthanone();
+
     DecentralisedStableCoin public immutable i_dsc;
-    address[] public immutable i_tokenaddresses;
+    address[] public tokenaddresses;
 
     uint256 public constant LIQUIDATION_THRESHOLD = 50;
 
@@ -37,7 +44,7 @@ contract DSCEngine is ReentrancyGuard {
         }
         for(uint256 i = 0 ; i < tokens.length ; i++){
             s_priceFeeds[tokens[i]] = pricefeeds[i];
-            i_tokenaddresses.push(tokens[i]);
+            tokenaddresses.push(tokens[i]);
         }
         i_dsc = DecentralisedStableCoin(dscAddress);
         
@@ -57,10 +64,7 @@ contract DSCEngine is ReentrancyGuard {
         if (healthFactor(msg.sender) < 1){
             revert dsc_healthfactorlessthanone();
         }
-        bool success = i_dsc.mint(msg.sender , amount);
-        if(!success){
-            revert dsc_mintfailed();
-        }
+        i_dsc.mint(msg.sender , amount);
     }
 
     function healthFactor(address user) public view returns (uint256){
@@ -71,8 +75,8 @@ contract DSCEngine is ReentrancyGuard {
 
     function getCollateralValueInUsd(address user) public view returns (uint256) {
         uint256 totalValue = 0;
-        for(uint256 i=0 ; i < i_tokenaddresses.length ; i++){
-            totalValue += (s_collateralDeposited[user][i_tokenaddresses[i]] * getPriceinUsd(i_tokenaddresses[i]))/1e18;
+        for(uint256 i=0 ; i < tokenaddresses.length ; i++){
+            totalValue += (s_collateralDeposited[user][tokenaddresses[i]] * getPriceinUsd(tokenaddresses[i]))/1e18;
         }
         return totalValue;
     }
