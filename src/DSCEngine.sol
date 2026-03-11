@@ -1,10 +1,11 @@
-//SPDX_License-Identifier: MIT
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
 import {DecentralisedStableCoin} from "./DecentralisedStableCoin.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
-contract DSCEngine {
+contract DSCEngine is ReentrancyGuard {
     DecentralisedStableCoin public immutable i_dsc;
     address[] public immutable i_tokenaddresses;
 
@@ -37,7 +38,7 @@ contract DSCEngine {
         
     }
 
-    function depositCollateral(address collateralDepositAddress , uint256 amount) external moreThanZero(amount) validCollateral(collateralDepositAddress){
+    function depositCollateral(address collateralDepositAddress , uint256 amount) external moreThanZero(amount) validCollateral(collateralDepositAddress) nonReentrant {
         s_collateralDeposited[msg.sender][collateralDepositAddress] += amount;
         bool success = IERC20(collateralDepositAddress).transferFrom(msg.sender , address(this) , amount);
         if(!success){
