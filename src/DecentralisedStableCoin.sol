@@ -6,6 +6,16 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 contract DecentralisedStableCoin is ERC20Burnable, Ownable {
 
+    constructor() ERC20("DecentralisedStableCoin" , "DSC"){
     
+    }
+
+    function mint(address to, uint256 amount) external onlyOwner {
+        _mint(to, amount);
+    }
+
+    function burn(uint256 amount) public override onlyOwner {
+        super.burn(amount);
+    }
 
 }
