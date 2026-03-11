@@ -2,12 +2,14 @@
 pragma solidity ^0.8.18;
 
 import {DecentralisedStableCoin} from "./DecentralisedStableCoin.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract DSCEngine {
     DecentralisedStableCoin public immutable i_dsc;
     address[] public immutable i_tokenaddresses;
 
     mapping(address token => address pricefeeds) public s_priceFeeds;
+    mapping(address user => mapping(address token => uint256 amount)) public s_collateralDeposited;
 
     modifier moreThanZero(uint256 amount){
         if(amount == 0) {
@@ -35,10 +37,13 @@ contract DSCEngine {
         
     }
 
-    function depositCollateral(address collateralDepositAddress , uint256 amount) external {
-        // this function is used to deposit collateral of diiferent token address for a particular address ,
-        // for this you have to create two mapping 
-        // and connect it with ierc20 , add some modifiers also 
+    function depositCollateral(address collateralDepositAddress , uint256 amount) external moreThanZero(amount) validCollateral(collateralDepositAddress){
+        s_collateralDeposited[msg.sender][collateralDepositAddress] += amount;
+        bool success = IERC20(collateralDepositAddress).transferFrom(msg.sender , address(this) , amount);
+        if(!success){
+            revert dsc_transferfailed();
+        }
+
     }
 
 
