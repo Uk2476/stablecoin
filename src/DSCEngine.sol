@@ -11,6 +11,8 @@ contract DSCEngine is ReentrancyGuard {
     DecentralisedStableCoin public immutable i_dsc;
     address[] public immutable i_tokenaddresses;
 
+    uint256 public constant LIQUIDATION_THRESHOLD = 50;
+
     mapping(address token => address pricefeeds) public s_priceFeeds;
     mapping(address user => mapping(address token => uint256 amount)) public s_collateralDeposited;
     mapping(address user => uint256 amountDscMinted) public s_DscMinted;
@@ -55,11 +57,16 @@ contract DSCEngine is ReentrancyGuard {
         if (healthFactor(msg.sender) < 1){
             revert dsc_healthfactorlessthanone();
         }
+        bool success = i_dsc.mint(msg.sender , amount);
+        if(!success){
+            revert dsc_mintfailed();
+        }
     }
 
     function healthFactor(address user) public view returns (uint256){
         uint256 totalDscMinted = s_DscMinted[user];
         uint256 totalCollateralValueInUsd = getCollateralValueInUsd(user);
+        return ((totalCollateralValueInUsd * LIQUIDATION_THRESHOLD * 1e18)/100 / totalDscMinted) ;
     }
 
     function getCollateralValueInUsd(address user) public view returns (uint256) {
@@ -74,7 +81,7 @@ contract DSCEngine is ReentrancyGuard {
         address priceFeedAddress = s_priceFeeds[token];
         AggregatorV3Interface exchangeRate = AggregatorV3Interface(priceFeedAddress);
         (,int256 price ,,,)= exchangeRate.latestRoundData();
-        return uint256(price* 1e10);
+        return uint256(price) * 1e10;
         
     }
 }
