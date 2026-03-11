@@ -47,4 +47,10 @@ contract DecentralisedStableCoinTest is Test {
         Dsc.burn(5 ether);
         assertEq(Dsc.balanceOf(address(this)), 5 ether);
     }
+
+    function testBurnInsufficeentBalance() public {
+        Dsc.mint(address(this) , 10 ether);
+        vm.expectRevert();
+        Dsc.burn(15 ether);
+    }
 }
