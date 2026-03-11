@@ -5,7 +5,9 @@ import {ERC20Burnable, ERC20} from "openzeppelin-contracts/contracts/token/ERC20
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 contract DecentralisedStableCoin is ERC20Burnable, Ownable {
-
+    error InvalidAddress();
+    error AmountMustBeGreaterThanZero();
+    error InsufficientBalance();
 
     constructor() ERC20("DecentralisedStableCoin" , "DSC"){}
 
