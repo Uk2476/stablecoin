@@ -20,4 +20,9 @@ contract DecentralisedStableCoinTest is Test {
         Dsc.mint(address(this), 10 ether);
 
     }
+
+    function testMintAmountEqualsZero() public {
+        vm.expectRevert();
+        Dsc.mint(address(this), 0);
+    }
 }
