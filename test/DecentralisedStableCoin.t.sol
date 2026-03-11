@@ -11,9 +11,13 @@ contract DecentralisedStableCoinTest is Test {
     function setUp() public {
         Dsc = new DecentralisedStableCoin();
         vm.deal(User, 100 ether);
-        vm.deal(msg.sender, 100 ether);
+        vm.deal(address(this), 100 ether);
     }
 
+    function testMintOnlyOwner() public {
+        vm.prank(User); 
+        vm.expectRevert();
+        Dsc.mint(address(this), 10 ether);
 
-    
+    }
 }
