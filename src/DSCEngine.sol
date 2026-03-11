@@ -50,7 +50,7 @@ contract DSCEngine is ReentrancyGuard {
         
     }
 
-    function depositCollateral(address collateralDepositAddress , uint256 amount) external moreThanZero(amount) validCollateral(collateralDepositAddress) nonReentrant {
+    function depositCollateral(address collateralDepositAddress , uint256 amount) public moreThanZero(amount) validCollateral(collateralDepositAddress) nonReentrant {
         s_collateralDeposited[msg.sender][collateralDepositAddress] += amount;
         bool success = IERC20(collateralDepositAddress).transferFrom(msg.sender , address(this) , amount);
         if(!success){
@@ -59,12 +59,17 @@ contract DSCEngine is ReentrancyGuard {
 
     }
 
-    function mintDSc(uint256 amount) external moreThanZero(amount) nonReentrant {
+    function mintDSc(uint256 amount) public moreThanZero(amount) nonReentrant {
         s_DscMinted[msg.sender] += amount ;
         if (healthFactor(msg.sender) < 1){
             revert dsc_healthfactorlessthanone();
         }
         i_dsc.mint(msg.sender , amount);
+    }
+
+    function depositCollateralAndMintDsc (address collateralAddress , uint256 collateralAmount , uint256 dscAmount) external {
+        depositCollateral(collateralAddress, collateralAmount);
+        mintDSc(dscAmount);
     }
 
     function healthFactor(address user) public view returns (uint256){
