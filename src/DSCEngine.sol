@@ -11,6 +11,7 @@ contract DSCEngine is ReentrancyGuard {
 
     mapping(address token => address pricefeeds) public s_priceFeeds;
     mapping(address user => mapping(address token => uint256 amount)) public s_collateralDeposited;
+    mapping(address user => uint256 amountDscMinted) public s_DscMinted;
 
     modifier moreThanZero(uint256 amount){
         if(amount == 0) {
@@ -45,6 +46,17 @@ contract DSCEngine is ReentrancyGuard {
             revert dsc_transferfailed();
         }
 
+    }
+
+    function mintDSc(uint256 amount) external moreThanZero(amount) nonReentrant {
+        s_DscMinted[msg.sender] += amount ;
+        if (healthFactor(msg.sender) < 1){
+            revert dsc_healthfactorlessthanone();
+        }
+    }
+
+    function healthFactor(address user) public view returns (uint256){
+        
     }
 
 
