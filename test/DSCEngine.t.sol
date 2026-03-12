@@ -20,7 +20,9 @@ contract DSCEngineTest is Test {
     address public etherUsdPriceFeed;
     address public wbtcUsdPriceFeed;
     address public weth;
-    address public wbtc;    
+    address public wbtc;  
+    address[] public tokenAddresses;
+    address[] public priceFeedAddresses;
 
     address public user = makeAddr("User");
     uint256 public constant AMOUNT_COLLATERAL = 10 ether;
@@ -41,7 +43,14 @@ contract DSCEngineTest is Test {
         assertEq(priceInUsd , 1000 ether);
     }
 
-   
+    function testRevertsIfTokenLengthDoesNotMatchPriceFeedSlength() external {
+        tokenAddresses.push(weth);
+        priceFeedAddresses.push(etherUsdPriceFeed);
+        priceFeedAddresses.push(wbtcUsdPriceFeed);
+
+        vm.expectRevert(DSCEngine.dsc_tokensandpricefeedslengthmismatcch.selector);
+        new DSCEngine(tokenAddresses , priceFeedAddresses , address(dsc));
+    }
 
     function testGetCollateralVAlueInUsd () public {
         vm.prank(user);
