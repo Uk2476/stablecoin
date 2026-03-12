@@ -66,10 +66,10 @@ contract DSCEngineTest is Test {
         assertEq(tokenAmountFromUsd , 1 );
     }
 
-    function testGetCollateralVAlueInUsd () public {
+    function testGetCollateralVAlueInUsd () public  depositCollateral(){
         vm.prank(user);
         uint256 collateralValueInUsd = dscEngine.getCollateralValueInUsd(user);
-        assertEq(collateralValueInUsd , 20000 ether);
+        assertEq(collateralValueInUsd , 10000 ether);
     }  
 
     function testRevertsWithUnapprovedCollateral() public{
@@ -82,5 +82,18 @@ contract DSCEngineTest is Test {
     function testDepositCollateral() public depositCollateral(){
         uint256 collateralDEposited = dscEngine.getCollateralBalance(user, weth);
         assertEq(collateralDEposited, AMOUNT_COLLATERAL);
+    }
+
+    function testMintDsc() public depositCollateral {
+        vm.prank(user);
+        dscEngine.mintDSc(50 ether);
+        uint256 dscMinted = dscEngine.getDscMinted(user);
+        assertEq(dscMinted , 50 ether);
+    }
+
+    function testRevertIfHealthFactorLessThanOne() public depositCollateral {
+        vm.prank(user);
+        vm.expectRevert(DSCEngine.dsc_healthfactorlessthanone.selector);
+        dscEngine.mintDSc(10000 ether);
     }
 }
