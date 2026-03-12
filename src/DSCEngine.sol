@@ -93,6 +93,11 @@ contract DSCEngine is ReentrancyGuard {
         i_dsc.burn(amount);
     }
 
+    function redeemCollateralAndBurnDsc ( address collateralAddress , uint256 collateralAmount , uint256 dscAmount) external {
+        redeemCollateral(collateralAddress, collateralAmount);
+        burnDsc(dscAmount);
+    }
+
     function healthFactor(address user) public view returns (uint256){
         uint256 totalDscMinted = s_DscMinted[user];
         uint256 totalCollateralValueInUsd = getCollateralValueInUsd(user);
