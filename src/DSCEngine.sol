@@ -15,6 +15,7 @@ contract DSCEngine is ReentrancyGuard {
     error dsc_transferfailed();
     error dsc_healthfactorlessthanone();
     error dsc_healthFactorisOkay();
+    error dsc_healthFFactorDoesNotImprove();
 
     DecentralisedStableCoin public immutable i_dsc;
     address[] public tokenaddresses;
@@ -102,7 +103,8 @@ contract DSCEngine is ReentrancyGuard {
 
 
     function liquidate(address collateral, address user, uint256 debtToCover) external {
-        if (healthFactor(user) >= 1e18) {
+        uint256 healthFactorInStart = healthFactor(user);
+        if (healthFactorInStart >= 1e18) {
             revert dsc_healthFactorisOkay();
         }
         uint256 collateralAmountToCover = getTokenAmountFromUsd(collateral , debtToCover);
@@ -117,7 +119,10 @@ contract DSCEngine is ReentrancyGuard {
         if(!success){
             revert dsc_transferfailed();
         }
-
+        uint256 healthFactorInend = healthFactor(user);
+        if (healthFactorInend<= healthFactorInStart){
+            revert dsc_healthFFactorDoesNotImprove();
+        }
     }
 
 
