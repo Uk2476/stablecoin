@@ -35,7 +35,17 @@ contract DSCEngineTest is Test {
 
     }
 
-    function testGetUsdValue() public{
-        
+
+    function testGetPriceInUsd() public view{
+        uint256 priceInUsd =  dscEngine.getPriceinUsd(weth);
+        assertEq(priceInUsd , 1000 ether);
+    }
+
+   
+
+    function testGetCollateralVAlueInUsd () public {
+        vm.prank(user);
+        uint256 collateralValueInUsd = dscEngine.getCollateralValueInUsd(user);
+        assertEq(collateralValueInUsd , 20000 ether);
     }   
 }
