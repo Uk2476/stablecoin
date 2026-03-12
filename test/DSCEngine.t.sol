@@ -28,6 +28,14 @@ contract DSCEngineTest is Test {
     uint256 public constant AMOUNT_COLLATERAL = 10 ether;
     uint256 public constant STARTING_BALANCE= 10 ether;
 
+    modifier depositCollateral() {
+        vm.startPrank(user);
+        ERC20Mock(weth).approve(address(dscEngine), AMOUNT_COLLATERAL);
+        dscEngine.depositCollateral(weth , AMOUNT_COLLATERAL);
+        vm.stopPrank();
+        _;
+    }
+
     function setUp() public{
         deployer = new DeployDSC();
         (dscEngine , dsc , Config) = deployer.run();
@@ -52,9 +60,27 @@ contract DSCEngineTest is Test {
         new DSCEngine(tokenAddresses , priceFeedAddresses , address(dsc));
     }
 
+
+    function testGetTokenAmountFromUsd() public view {
+        uint256 tokenAmountFromUsd = dscEngine.getTokenAmountFromUsd(weth , 1000 );
+        assertEq(tokenAmountFromUsd , 1 );
+    }
+
     function testGetCollateralVAlueInUsd () public {
         vm.prank(user);
         uint256 collateralValueInUsd = dscEngine.getCollateralValueInUsd(user);
         assertEq(collateralValueInUsd , 20000 ether);
-    }   
+    }  
+
+    function testRevertsWithUnapprovedCollateral() public{
+        ERC20Mock notListedCollateral = new ERC20Mock("NotListedCollateral" , "NLC" , msg.sender , 1000e18);
+        vm.prank(user);
+        vm.expectRevert(DSCEngine.dsc_notavalidcollateral.selector);
+        dscEngine.depositCollateral(address(notListedCollateral), 1000e18);
+    }
+
+    function testDepositCollateral() public depositCollateral(){
+        uint256 collateralDEposited = dscEngine.getCollateralBalance(user, weth);
+        assertEq(collateralDEposited, AMOUNT_COLLATERAL);
+    }
 }
