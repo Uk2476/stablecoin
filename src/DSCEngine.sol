@@ -14,11 +14,13 @@ contract DSCEngine is ReentrancyGuard {
     error dsc_tokensandpricefeedslengthmismatcch(); 
     error dsc_transferfailed();
     error dsc_healthfactorlessthanone();
+    error dsc_healthFactorisOkay();
 
     DecentralisedStableCoin public immutable i_dsc;
     address[] public tokenaddresses;
 
     uint256 public constant LIQUIDATION_THRESHOLD = 50;
+    uint256 public constant LIQUIDATION_BONUS = 10;
 
     mapping(address token => address pricefeeds) public s_priceFeeds;
     mapping(address user => mapping(address token => uint256 amount)) public s_collateralDeposited;
@@ -98,6 +100,27 @@ contract DSCEngine is ReentrancyGuard {
         burnDsc(dscAmount);
     }
 
+
+    function liquidate(address collateral, address user, uint256 debtToCover) external {
+        if (healthFactor(user) >= 1e18) {
+            revert dsc_healthFactorisOkay();
+        }
+        uint256 collateralAmountToCover = getTokenAmountFromUsd(collateral , debtToCover);
+        uint256 bonusCollateral = (collateralAmountToCover * LIQUIDATION_BONUS) / 100;
+
+        s_collateralDeposited[user][collateral] -= collateralAmountToCover;
+        s_DscMinted[user] -= debtToCover;
+        s_collateralDeposited[msg.sender][collateral] += collateralAmountToCover + bonusCollateral;
+        
+        i_dsc.burn(debtToCover);
+        bool success = IERC20(collateral).transferFrom(user, msg.sender, collateralAmountToCover + bonusCollateral);
+        if(!success){
+            revert dsc_transferfailed();
+        }
+
+    }
+
+
     function healthFactor(address user) public view returns (uint256){
         uint256 totalDscMinted = s_DscMinted[user];
         uint256 totalCollateralValueInUsd = getCollateralValueInUsd(user);
@@ -118,5 +141,10 @@ contract DSCEngine is ReentrancyGuard {
         (,int256 price ,,,)= exchangeRate.latestRoundData();
         return uint256(price) * 1e10;
         
+    }
+
+    function getTokenAmountFromUsd(address token , uint256 usdAmount) public view returns (uint256) {
+        uint256 price = getPriceinUsd(token);
+        return (usdAmount * 1e18) / price;
     }
 }
