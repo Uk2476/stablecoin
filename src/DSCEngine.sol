@@ -114,8 +114,7 @@ contract DSCEngine is ReentrancyGuard {
         s_DscMinted[user] -= debtToCover;
         s_collateralDeposited[msg.sender][collateral] += collateralAmountToCover + bonusCollateral;
         
-        i_dsc.burn(debtToCover);
-        bool success = IERC20(collateral).transferFrom(user, msg.sender, collateralAmountToCover + bonusCollateral);
+        bool success = i_dsc.transferFrom(msg.sender , address (this) , debtToCover);
         if(!success){
             revert dsc_transferfailed();
         }
@@ -128,6 +127,9 @@ contract DSCEngine is ReentrancyGuard {
 
     function healthFactor(address user) public view returns (uint256){
         uint256 totalDscMinted = s_DscMinted[user];
+        if (totalDscMinted == 0){
+            return type(uint256).max;
+        }
         uint256 totalCollateralValueInUsd = getCollateralValueInUsd(user);
         return ((totalCollateralValueInUsd * LIQUIDATION_THRESHOLD * 1e18)/100 / totalDscMinted) ;
     }
@@ -152,4 +154,17 @@ contract DSCEngine is ReentrancyGuard {
         uint256 price = getPriceinUsd(token);
         return (usdAmount * 1e18) / price;
     }
+
+    function getCollateralBalance(address user , address collateral) public view returns (uint256){
+        return s_collateralDeposited[user][collateral];
+    }
+
+    function getDscMinted(address user) public view returns (uint256){
+        return s_DscMinted[user];
+    }
+     
+    function getCollateralAddresses() public view returns (address[] memory){
+        return tokenaddresses;
+    }
+
 }
